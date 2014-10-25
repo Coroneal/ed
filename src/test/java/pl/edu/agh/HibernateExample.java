@@ -72,7 +72,7 @@ public class HibernateExample {
         user.setName("CommentUser");
         user = saveUser(user,session);
         Comment c = new Comment();
-        c.setPostDate("data");
+        //c.setPostDate("data");
         c.setContent("comment text");
         c.setAuthor(user);
         c.setLikes_number(12);
@@ -81,7 +81,7 @@ public class HibernateExample {
         list.add(c);
 
         Comment c1 = new Comment();
-        c1.setPostDate("data");
+        //c1.setPostDate("data");
         c1.setContent("comment text2");
         c1.setAuthor(user);
         c1.setLikes_number(3);

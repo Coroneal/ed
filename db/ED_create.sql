@@ -11,10 +11,11 @@
 CREATE TABLE Comment (
     id  SERIAL NOT NULL,
     content text  NOT NULL,
-    post_date varchar(500) NOT NULL,
+    post_date date NOT NULL,
     likes_number int  NULL,
     text_id int  NOT NULL,
     author_id int  NULL,
+    reply_comment_id int  NULL,
     CONSTRAINT Comment_pk PRIMARY KEY (id)
 );
 
@@ -120,6 +121,16 @@ ALTER TABLE Comment ADD CONSTRAINT Comment_Text
     INITIALLY IMMEDIATE 
 ;
 
+-- Reference:  Comment_Comment (table: Comment)
+
+
+ALTER TABLE Comment ADD CONSTRAINT Comment_Comment 
+    FOREIGN KEY (reply_comment_id)
+    REFERENCES Comment (id)
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE 
+;
+
 -- Reference:  SocialMediaUser_SocialMediaType (table: SocialMediaUser)
 
 
@@ -136,16 +147,6 @@ ALTER TABLE SocialMediaUser ADD CONSTRAINT SocialMediaUser_SocialMediaType
 ALTER TABLE Text ADD CONSTRAINT Text_Author 
     FOREIGN KEY (author_id)
     REFERENCES BlogUser (id)
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
-;
-
--- Reference:  Text_Tag (table: Text)
-
-
-ALTER TABLE Text ADD CONSTRAINT Text_Tag 
-    FOREIGN KEY (tag_id)
-    REFERENCES Tag (id)
     NOT DEFERRABLE 
     INITIALLY IMMEDIATE 
 ;

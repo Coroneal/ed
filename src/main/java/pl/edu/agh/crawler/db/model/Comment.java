@@ -17,12 +17,19 @@ public class Comment {
     @GeneratedValue
     private int id;
 
-    @Column(name = "post_date")
-    private String postDate;
+    @Column(name = "post_date", columnDefinition = "DATETIME")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date postDate;
 
     private String content;
 
     private int likes_number;
+
+    @Transient
+    private String parentId;
+
+    @Transient
+    private String jsonId;
 
     @ManyToOne(cascade = {CascadeType.ALL })
     @JoinColumn(name = "author_id")
@@ -31,13 +38,13 @@ public class Comment {
     @ManyToOne(cascade = {CascadeType.ALL })
     @JoinColumn(name = "text_id")
     private Text text;
-//
-//    @ManyToOne(cascade = {CascadeType.ALL})
-//    @JoinColumn(name = "reply_to_comment_id")
-//    private Comment replyTo;
 
-//    @OneToMany(mappedBy = "replyTo")
-//    private Set<Comment> childComments;
+    @ManyToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "reply_comment_id")
+    private Comment replyTo;
+
+    @OneToMany(mappedBy = "replyTo")
+    private Set<Comment> childComments;
 
     public Comment() {
     }
@@ -75,21 +82,21 @@ public class Comment {
         this.text = text;
     }
 
-//    public Comment getReplyTo() {
-//        return replyTo;
-//    }
-//
-//    public void setReplyTo(Comment replyTo) {
-//        this.replyTo = replyTo;
-//    }
+    public Comment getReplyTo() {
+        return replyTo;
+    }
 
-//    public Set<Comment> getChildComments() {
-//        return childComments;
-//    }
-//
-//    public void setChildComments(Set<Comment> childComments) {
-//        this.childComments = childComments;
-//    }
+    public void setReplyTo(Comment replyTo) {
+        this.replyTo = replyTo;
+    }
+
+    public Set<Comment> getChildComments() {
+        return childComments;
+    }
+
+    public void setChildComments(Set<Comment> childComments) {
+        this.childComments = childComments;
+    }
 
     public String getContent() {
         return content;
@@ -99,11 +106,28 @@ public class Comment {
         this.content = content;
     }
 
-    public String getPostDate() {
+    public Date getPostDate() {
         return postDate;
     }
 
-    public void setPostDate(String postDate) {
+    public void setPostDate(Date postDate) {
         this.postDate = postDate;
+    }
+
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    public String getJsonId() {
+        return jsonId;
+    }
+
+    public void setJsonId(String jsonId) {
+        this.jsonId = jsonId;
     }
 }

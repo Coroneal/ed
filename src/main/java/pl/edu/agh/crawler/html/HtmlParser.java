@@ -1,39 +1,33 @@
 package pl.edu.agh.crawler.html;
 
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebResponse;
+import com.google.gson.GsonBuilder;
+import com.google.gson.internal.LinkedTreeMap;
+import org.apache.commons.codec.binary.Base64;
 import org.hibernate.Session;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Proxy;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.xml.sax.SAXException;
 import pl.edu.agh.crawler.db.HibernateUtil;
 import pl.edu.agh.crawler.db.model.*;
-import sun.plugin.javascript.navig.Link;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by nyga on 15.10.14.
  */
 public class HtmlParser {
 
-    private final static String SELENIUM_DRIVER= "./selenium/chromedriver";
+    private final static String FYRO_SERVER_URL = "http://bootstrap.tuaw.fyre.co/bs3/v3.1/tuaw.fyre.co/SITE_ID/ARTICLE_ID/init";
 
     private boolean verbose;
     private Document doc;
-    WebDriver driver;
     Session session;
 
     String title;
@@ -48,11 +42,6 @@ public class HtmlParser {
     public HtmlParser(Document doc, boolean verbose) throws IOException, SAXException {
         this.session = HibernateUtil.getSessionFactory().openSession();
         this.verbose = verbose;
-        System.setProperty("webdriver.chrome.driver",SELENIUM_DRIVER );
-        //System.setProperty("webdriver.firefox.driver", "firefox");
-        ChromeOptions options = new ChromeOptions();
-        options.setExperimentalOption("excludeSwitches", Arrays.asList("ignore-certificate-errors"));
-        driver = new ChromeDriver(options);
         this.doc = doc;
         parseHtml();
     }
@@ -79,51 +68,71 @@ public class HtmlParser {
         source.remove();
         content = extract(body);
 
-        // comment was dynamically created by javascript, so sth was needed to evaluate javascript
-        driver.get(doc.baseUri());
-        WebElement discussionElement = driver.findElement(By.id("lf_comment_stream"));
-        String html = discussionElement.getAttribute("innerHTML");
-        driver.quit();
-        Document discussion = Jsoup.parse(html);
+        String articleHTML = doc.html();
+        String articleId = getPropertyValue("articleId",articleHTML);
+        byte[] encodedBytes = Base64.encodeBase64(articleId.getBytes());
+        articleId =  new String(encodedBytes);
+        String siteId = getPropertyValue("siteId",articleHTML);
 
-        String listeningNumberText = extract(discussion.select("em[class=fyre-stream-livecount]"));
-        listeningNumber = getNumberFromString(listeningNumberText);
+        String url = FYRO_SERVER_URL.replace("SITE_ID",siteId).replace("ARTICLE_ID",articleId);
+        System.out.println(articleId);
+        System.out.println(siteId);
+        System.out.println(url);
+        System.out.println("----------------------");
+        InputStream input = new URL(url).openStream();
+        Reader reader = new InputStreamReader(input, "UTF-8");
+        GsonBuilder builder = new GsonBuilder();
+        LinkedTreeMap<String,LinkedTreeMap> o = (LinkedTreeMap<String,LinkedTreeMap>)builder.create().fromJson(reader, Object.class);
+        o = o.get("headDocument");
+        Object content = o.get("content");
+        ArrayList<LinkedTreeMap> comments = (ArrayList<LinkedTreeMap>)  content;
+        LinkedTreeMap<String,LinkedTreeMap> authors = o.get("authors");
+        Object followers = o.get("followers");
+        listeningNumber = ((ArrayList<String>) followers).size();
+        listComments = extractComments(comments,authors);
 
-        for( Element comment : discussion.getElementsByTag("article")){
-            if (!comment.hasAttr("data-author-id") || !comment.hasAttr("data-message-id"))
-                comment.remove();
-        }
-        Elements comments =  discussion.getElementsByTag("article");
-        listComments = extractComments(comments);
         printHeadlines();
         saveToDB();
     }
 
-    private Set<Comment> extractComments(Elements comments){
-        Set<Comment> list = new HashSet<Comment>();
-        for ( Element comment : comments) {
 
-            String userName = extract(comment.getElementsByAttributeValue("itemprop", "author"));
-            String date = comment.select("meta[itemprop=dateCreated]").first().attr("content");
-            String text = extract(comment.select("div[itemprop=text]"));
-            String likesCount = extract(comment.select("span[class=fyre-comment-like-count]"));
+    private Set<Comment> extractComments(ArrayList<LinkedTreeMap> comments,LinkedTreeMap<String,LinkedTreeMap> authors ){
+        Set<Comment> list = new HashSet<Comment>();
+        for ( LinkedTreeMap comment : comments) {
+
+            comment = (LinkedTreeMap<String,LinkedTreeMap>) comment.get("content");
+            String authorId = (String) comment.get("authorId");
+            if (authorId == null)
+                continue;
+            String userName = (String) authors.get(authorId).get("displayName");
+            long date =(new Date()).getTime() - (long) ((Double) comment.get("createdAt")).doubleValue();
+            String text = Jsoup.parse((String) comment.get("bodyHtml")).text();
+            int likesCount = 0;
+            LinkedTreeMap<String,LinkedTreeMap> annotations = (LinkedTreeMap<String,LinkedTreeMap>) comment.get("annotations");
+            if(annotations.containsKey("likedBy")) {
+                Object o = annotations.get("likedBy");
+                likesCount = ((ArrayList<LinkedTreeMap>) o).size();
+            }
+            String parentId = (String) comment.get("parentId");
+            String id = (String) comment.get("id");
 
             BlogUser user = new BlogUser();
             user.setAuthor(false);
             user.setName(userName);
             Comment c = new Comment();
             user.setName(userName);
-            c.setPostDate(date);
+            c.setPostDate(new Date(date));
             c.setContent(text);
-            c.setLikes_number(getNumberFromString(likesCount));
+            c.setLikes_number(likesCount);
             c.setAuthor(user);
+            c.setParentId(parentId);
+            c.setJsonId(id);
             list.add(c);
 
             printComment(c);
         }
         return list;
     }
-
 
     private void saveToDB(){
 
@@ -161,21 +170,26 @@ public class HtmlParser {
             session.save(comment);
         }
 
+        for (Comment comment: listComments) {
+            String id = comment.getParentId();
+            for (Comment otherComment: listComments) {
+                if(otherComment.getJsonId().equals(id))
+                    comment.setReplyTo(otherComment);
+            }
+            session.save(comment);
+        }
+
         article.setTags(tagsObj);
         article.setComments(listComments);
         session.getTransaction().commit();
     }
 
-    private int getNumberFromString(String string){
-        Matcher matcher = Pattern.compile("\\d+").matcher(string);
-        int number;
-        try {
-            matcher.find();
-            number = Integer.valueOf(matcher.group());
-        } catch (Exception e){
-            return 0;
-        }
-        return number;
+    private String getPropertyValue(String property, String context){
+        int articleIdIndex = context.indexOf(property);
+        String sub = context.substring(articleIdIndex);
+        sub = sub.substring(sub.indexOf(":")+1,sub.indexOf(","));
+        sub = sub.replaceAll("\"","");
+        return sub;
     }
 
     private String extract(Elements elements){
