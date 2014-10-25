@@ -31,11 +31,11 @@ public class Comment {
     @Transient
     private String jsonId;
 
-    @ManyToOne(cascade = {CascadeType.ALL })
+    @ManyToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "author_id")
     private BlogUser author;
 
-    @ManyToOne(cascade = {CascadeType.ALL })
+    @ManyToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "text_id")
     private Text text;
 

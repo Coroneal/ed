@@ -1,12 +1,7 @@
 package pl.edu.agh.crawler.db.model;
 
 
-
-
-import org.hibernate.annotations.Cascade;
-
 import javax.persistence.*;
-import java.util.Date;
 import java.util.Set;
 
 /**
@@ -24,7 +19,7 @@ public class Text {
 
     private String content;
 
-//    @Column(name = "post_date", columnDefinition = "DATETIME")
+    //    @Column(name = "post_date", columnDefinition = "DATETIME")
 //    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "post_date")
     private String postDate;
@@ -34,16 +29,16 @@ public class Text {
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "Tag_Text", joinColumns = {
-            @JoinColumn(name = "text_id", nullable = false, updatable = false) },
-            inverseJoinColumns = { @JoinColumn(name = "tag_id",
-                    nullable = false, updatable = false) })
+            @JoinColumn(name = "text_id", nullable = false, updatable = false)},
+            inverseJoinColumns = {@JoinColumn(name = "tag_id",
+                    nullable = false, updatable = false)})
     private Set<Tag> tags;
 
-    @ManyToOne(cascade = {CascadeType.ALL })
+    @ManyToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "author_id")
     private BlogUser author;
 
-    @OneToMany(mappedBy = "text",cascade = {CascadeType.ALL })
+    @OneToMany(mappedBy = "text", cascade = {CascadeType.ALL})
     private Set<Comment> comments;
 
 

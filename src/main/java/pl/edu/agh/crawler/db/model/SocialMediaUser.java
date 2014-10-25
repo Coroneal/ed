@@ -15,7 +15,7 @@ public class SocialMediaUser {
 
     private String name;
 
-    @ManyToOne(cascade = {CascadeType.ALL })
+    @ManyToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "socialMediaType_id")
     private SocialMediaType socialMediaType;
 

@@ -25,11 +25,7 @@ import java.util.*;
 public class HtmlParser {
 
     private final static String FYRO_SERVER_URL = "http://bootstrap.tuaw.fyre.co/bs3/v3.1/tuaw.fyre.co/SITE_ID/ARTICLE_ID/init";
-
-    private boolean verbose;
-    private Document doc;
     Session session;
-
     String title;
     String tweet;
     String authorText;
@@ -38,6 +34,8 @@ public class HtmlParser {
     String content;
     int listeningNumber;
     Set<Comment> listComments;
+    private boolean verbose;
+    private Document doc;
 
     public HtmlParser(Document doc, boolean verbose) throws IOException, SAXException {
         this.session = HibernateUtil.getSessionFactory().openSession();
@@ -58,9 +56,9 @@ public class HtmlParser {
         Element body = doc.select("div[class=body").first();
         Elements tagsElements = body.getElementsByClass("view-tags").select("a[href]");
         tags = new ArrayList<String>();
-        for ( Element tag : tagsElements) {
+        for (Element tag : tagsElements) {
             String tagName = extract(tag);
-            if(!tags.contains(tagName))
+            if (!tags.contains(tagName))
                 tags.add(extract(tag));
         }
         body.getElementsByClass("view-tags").remove();
@@ -69,47 +67,43 @@ public class HtmlParser {
         content = extract(body);
 
         String articleHTML = doc.html();
-        String articleId = getPropertyValue("articleId",articleHTML);
+        String articleId = getPropertyValue("articleId", articleHTML);
         byte[] encodedBytes = Base64.encodeBase64(articleId.getBytes());
-        articleId =  new String(encodedBytes);
-        String siteId = getPropertyValue("siteId",articleHTML);
+        articleId = new String(encodedBytes);
+        String siteId = getPropertyValue("siteId", articleHTML);
 
-        String url = FYRO_SERVER_URL.replace("SITE_ID",siteId).replace("ARTICLE_ID",articleId);
-        System.out.println(articleId);
-        System.out.println(siteId);
-        System.out.println(url);
-        System.out.println("----------------------");
+        String url = FYRO_SERVER_URL.replace("SITE_ID", siteId).replace("ARTICLE_ID", articleId);
         InputStream input = new URL(url).openStream();
         Reader reader = new InputStreamReader(input, "UTF-8");
         GsonBuilder builder = new GsonBuilder();
-        LinkedTreeMap<String,LinkedTreeMap> o = (LinkedTreeMap<String,LinkedTreeMap>)builder.create().fromJson(reader, Object.class);
+        LinkedTreeMap<String, LinkedTreeMap> o = (LinkedTreeMap<String, LinkedTreeMap>) builder.create().fromJson(reader, Object.class);
         o = o.get("headDocument");
         Object content = o.get("content");
-        ArrayList<LinkedTreeMap> comments = (ArrayList<LinkedTreeMap>)  content;
-        LinkedTreeMap<String,LinkedTreeMap> authors = o.get("authors");
+        ArrayList<LinkedTreeMap> comments = (ArrayList<LinkedTreeMap>) content;
+        LinkedTreeMap<String, LinkedTreeMap> authors = o.get("authors");
         Object followers = o.get("followers");
         listeningNumber = ((ArrayList<String>) followers).size();
-        listComments = extractComments(comments,authors);
+        listComments = extractComments(comments, authors);
 
         printHeadlines();
         saveToDB();
     }
 
 
-    private Set<Comment> extractComments(ArrayList<LinkedTreeMap> comments,LinkedTreeMap<String,LinkedTreeMap> authors ){
+    private Set<Comment> extractComments(ArrayList<LinkedTreeMap> comments, LinkedTreeMap<String, LinkedTreeMap> authors) {
         Set<Comment> list = new HashSet<Comment>();
-        for ( LinkedTreeMap comment : comments) {
+        for (LinkedTreeMap comment : comments) {
 
-            comment = (LinkedTreeMap<String,LinkedTreeMap>) comment.get("content");
+            comment = (LinkedTreeMap<String, LinkedTreeMap>) comment.get("content");
             String authorId = (String) comment.get("authorId");
             if (authorId == null)
                 continue;
             String userName = (String) authors.get(authorId).get("displayName");
-            long date =(new Date()).getTime() - (long) ((Double) comment.get("createdAt")).doubleValue();
+            long date = (new Date()).getTime() - (long) ((Double) comment.get("createdAt")).doubleValue();
             String text = Jsoup.parse((String) comment.get("bodyHtml")).text();
             int likesCount = 0;
-            LinkedTreeMap<String,LinkedTreeMap> annotations = (LinkedTreeMap<String,LinkedTreeMap>) comment.get("annotations");
-            if(annotations.containsKey("likedBy")) {
+            LinkedTreeMap<String, LinkedTreeMap> annotations = (LinkedTreeMap<String, LinkedTreeMap>) comment.get("annotations");
+            if (annotations.containsKey("likedBy")) {
                 Object o = annotations.get("likedBy");
                 likesCount = ((ArrayList<LinkedTreeMap>) o).size();
             }
@@ -134,7 +128,7 @@ public class HtmlParser {
         return list;
     }
 
-    private void saveToDB(){
+    private void saveToDB() {
 
         session.beginTransaction();
 
@@ -145,9 +139,9 @@ public class HtmlParser {
         SocialMediaType type = new SocialMediaType();
         type.setName("Tweeter");
         SocialMediaUser mediaUser = new SocialMediaUser();
-        mediaUser.setSocialMediaType(HibernateUtil.saveSocialType(type,session));
+        mediaUser.setSocialMediaType(HibernateUtil.saveSocialType(type, session));
         mediaUser.setName(tweet);
-        author.setSocialMediaUser(HibernateUtil.saveSocialMediaUser(mediaUser,session));
+        author.setSocialMediaUser(HibernateUtil.saveSocialMediaUser(mediaUser, session));
         author.setName(authorText);
         article.setPostDate(timestamp);
         article.setListeningNumber(listeningNumber);
@@ -158,22 +152,22 @@ public class HtmlParser {
         for (String tagName : tags) {
             Tag tag = new Tag();
             tag.setName(tagName);
-            tag = HibernateUtil.saveTag(tag,session);
+            tag = HibernateUtil.saveTag(tag, session);
             tagsObj.add(tag);
         }
 
         session.save(article);
 
-        for (Comment comment: listComments) {
+        for (Comment comment : listComments) {
             comment.setAuthor(HibernateUtil.saveUser(comment.getAuthor(), session));
             comment.setText(article);
             session.save(comment);
         }
 
-        for (Comment comment: listComments) {
+        for (Comment comment : listComments) {
             String id = comment.getParentId();
-            for (Comment otherComment: listComments) {
-                if(otherComment.getJsonId().equals(id))
+            for (Comment otherComment : listComments) {
+                if (otherComment.getJsonId().equals(id))
                     comment.setReplyTo(otherComment);
             }
             session.save(comment);
@@ -184,29 +178,29 @@ public class HtmlParser {
         session.getTransaction().commit();
     }
 
-    private String getPropertyValue(String property, String context){
+    private String getPropertyValue(String property, String context) {
         int articleIdIndex = context.indexOf(property);
         String sub = context.substring(articleIdIndex);
-        sub = sub.substring(sub.indexOf(":")+1,sub.indexOf(","));
-        sub = sub.replaceAll("\"","");
+        sub = sub.substring(sub.indexOf(":") + 1, sub.indexOf(","));
+        sub = sub.replaceAll("\"", "");
         return sub;
     }
 
-    private String extract(Elements elements){
+    private String extract(Elements elements) {
         if (elements.size() == 0)
             return "";
         Element element = elements.first();
         return extract(element);
     }
 
-    private String extract(Element element){
+    private String extract(Element element) {
         if (element == null || element.text() == null)
             return "";
         return element.text();
     }
 
-    private void printHeadlines(){
-        if(verbose == false)
+    private void printHeadlines() {
+        if (verbose == false)
             return;
         System.out.println(title);
         System.out.println(tweet);
@@ -217,8 +211,8 @@ public class HtmlParser {
         System.out.println("---------------------------");
     }
 
-    private void printComment(Comment comment){
-        if(verbose == false)
+    private void printComment(Comment comment) {
+        if (verbose == false)
             return;
         System.out.println("++++++++++");
         System.out.println(comment.getAuthor().getName());

@@ -16,7 +16,7 @@ public class SocialMediaType {
 
     private String name;
 
-    @OneToMany(mappedBy = "socialMediaType",cascade = {CascadeType.ALL })
+    @OneToMany(mappedBy = "socialMediaType", cascade = {CascadeType.ALL})
     private Set<SocialMediaUser> users;
 
     public SocialMediaType() {

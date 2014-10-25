@@ -36,52 +36,52 @@ public class HibernateUtil {
     }
 
 
-    public static BlogUser saveUser(BlogUser user, Session session){
+    public static BlogUser saveUser(BlogUser user, Session session) {
         // check if crawler was there
         String hql = "FROM BlogUser u  WHERE u.name = :NAME";
         Query query = session.createQuery(hql);
-        query.setParameter("NAME",user.getName());
+        query.setParameter("NAME", user.getName());
         List results = query.list();
-        if (results.isEmpty()){
+        if (results.isEmpty()) {
             session.save(user);
             return user;
         }
         return (BlogUser) results.get(0);
     }
 
-    public static SocialMediaType saveSocialType(SocialMediaType type, Session session){
+    public static SocialMediaType saveSocialType(SocialMediaType type, Session session) {
         // check if crawler was there
         String hql = "FROM SocialMediaType s  WHERE s.name = :NAME";
         Query query = session.createQuery(hql);
-        query.setParameter("NAME",type.getName());
+        query.setParameter("NAME", type.getName());
         List results = query.list();
-        if (results.isEmpty()){
+        if (results.isEmpty()) {
             session.save(type);
             return type;
         }
         return (SocialMediaType) results.get(0);
     }
 
-    public static SocialMediaUser saveSocialMediaUser(SocialMediaUser user, Session session){
+    public static SocialMediaUser saveSocialMediaUser(SocialMediaUser user, Session session) {
         // check if crawler was there
         String hql = "FROM SocialMediaUser s  WHERE s.name = :NAME";
         Query query = session.createQuery(hql);
-        query.setParameter("NAME",user.getName());
+        query.setParameter("NAME", user.getName());
         List results = query.list();
-        if (results.isEmpty()){
+        if (results.isEmpty()) {
             session.save(user);
             return user;
         }
         return (SocialMediaUser) results.get(0);
     }
 
-    public static Tag saveTag(Tag tag, Session session){
+    public static Tag saveTag(Tag tag, Session session) {
         // check if crawler was there
         String hql = "FROM Tag t  WHERE t.name = :NAME";
         Query query = session.createQuery(hql);
-        query.setParameter("NAME",tag.getName());
+        query.setParameter("NAME", tag.getName());
         List results = query.list();
-        if (results.isEmpty()){
+        if (results.isEmpty()) {
             session.save(tag);
             return tag;
         }

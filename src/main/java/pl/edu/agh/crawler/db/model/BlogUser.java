@@ -18,15 +18,15 @@ public class BlogUser {
 
     private boolean author;
 
-    @ManyToOne(cascade = {CascadeType.ALL })
+    @ManyToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "socialMediaUser_id")
     private SocialMediaUser socialMediaUser;
 
 
-    @OneToMany(mappedBy = "author",cascade = {CascadeType.ALL })
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.ALL})
     private Set<Comment> comments;
 
-    @OneToMany(mappedBy = "author",cascade = {CascadeType.ALL })
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.ALL})
     private Set<Text> texts;
 
     public BlogUser() {

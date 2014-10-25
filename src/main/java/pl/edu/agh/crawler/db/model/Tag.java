@@ -15,7 +15,7 @@ public class Tag {
     private int id;
     private String name;
 
-    @ManyToMany(mappedBy = "tags",cascade = {CascadeType.ALL })
+    @ManyToMany(mappedBy = "tags", cascade = {CascadeType.ALL})
     private Set<Text> texts;
 
     public Tag(String name) {
