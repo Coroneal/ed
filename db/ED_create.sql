@@ -173,6 +173,10 @@ ALTER TABLE Tag_Text ADD CONSTRAINT Tag_Text_Text
 ;
 
 
+--ALTER TABLE text ADD COLUMN release_date date ;
+--ALTER TABLE text DROP COLUMN post_date;
+--ALTER TABLE text ALTER COLUMN release_date SET NOT NULL;
+
 
 -- End of file.
 

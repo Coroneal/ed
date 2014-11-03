@@ -2,6 +2,7 @@ package pl.edu.agh.crawler.db.model;
 
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -26,6 +27,10 @@ public class Text {
 
     @Column(name = "listening_number")
     private int listeningNumber;
+
+    @Column(name = "release_date", columnDefinition = "DATETIME")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date releaseDate;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "Tag_Text", joinColumns = {
@@ -108,5 +113,13 @@ public class Text {
 
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
+    }
+
+    public Date getReleaseDate() {
+        return releaseDate;
+    }
+
+    public void setReleaseDate(Date releaseDate) {
+        this.releaseDate = releaseDate;
     }
 }
