@@ -51,7 +51,7 @@ public class Crawler {
 
                 Document doc = Jsoup.connect(URL).timeout(10 * 1000).get();
                 if (isArticlePage(doc.baseUri())) {
-                    new HtmlParser(doc, true);
+                    new HtmlParser(doc, false);
                 }
 
                 //get all links and recursively call the processPage method
