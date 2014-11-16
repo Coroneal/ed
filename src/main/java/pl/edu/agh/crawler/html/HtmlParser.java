@@ -73,6 +73,7 @@ public class HtmlParser {
         String siteId = getPropertyValue("siteId", articleHTML);
 
         String url = FYRO_SERVER_URL.replace("SITE_ID", siteId).replace("ARTICLE_ID", articleId);
+        System.out.println("URL: "+url);
         InputStream input = new URL(url).openStream();
         Reader reader = new InputStreamReader(input, "UTF-8");
         GsonBuilder builder = new GsonBuilder();
@@ -99,7 +100,8 @@ public class HtmlParser {
             if (authorId == null)
                 continue;
             String userName = (String) authors.get(authorId).get("displayName");
-            long date = (new Date()).getTime() - (long) ((Double) comment.get("createdAt")).doubleValue();
+            long date =  (long) ((Double) comment.get("createdAt")).doubleValue();
+            date *= 1000;
             String text = Jsoup.parse((String) comment.get("bodyHtml")).text();
             int likesCount = 0;
             LinkedTreeMap<String, LinkedTreeMap> annotations = (LinkedTreeMap<String, LinkedTreeMap>) comment.get("annotations");
