@@ -73,7 +73,7 @@ public class HtmlParser {
         String siteId = getPropertyValue("siteId", articleHTML);
 
         String url = FYRO_SERVER_URL.replace("SITE_ID", siteId).replace("ARTICLE_ID", articleId);
-        System.out.println("URL: "+url);
+        //System.out.println("URL: "+url);
         InputStream input = new URL(url).openStream();
         Reader reader = new InputStreamReader(input, "UTF-8");
         GsonBuilder builder = new GsonBuilder();

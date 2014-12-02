@@ -42,6 +42,7 @@ public class Crawler {
         try {
             if (results.isEmpty()) {
 
+                System.out.println(URL);
                 //store the URL to database to avoid parsing again
                 session.beginTransaction();
                 session.save(new Record(URL));
@@ -58,8 +59,10 @@ public class Crawler {
                 Elements questions = doc.select("a[href]");
                 for (Element link : questions) {
                     String href = link.attr("href");
-                    if (isArticlePage(href) || href.startsWith("/page/"))
+                    if (isArticlePage(href) || href.startsWith("/page/")){
                         processPage(link.attr("abs:href"));
+                    }
+
                 }
 
 
